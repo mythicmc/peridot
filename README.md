@@ -5,7 +5,7 @@ IaC deployment engine for Minecraft servers. Build, configure and update Minecra
 ## Commands
 
 - `peridot status` / `peridot state`: Displays the current status of the configured Minecraft servers, comparing the current state of the server files with the desired state defined in Peridot's configuration.
-- `peridot apply`: Applies the desired state of the Minecraft servers based on the configuration and repository data.
+- `peridot apply`: Applies the desired state, specified in Peridot's configuration and repository data, to the Minecraft server files on-disk.
 
 ## Architecture
 

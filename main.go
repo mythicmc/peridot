@@ -37,8 +37,10 @@ func main() {
 			fmt.Println("Usage: " + name + " status [server]")
 			fmt.Println("    OR " + name + " state [server]")
 			fmt.Println("")
-			fmt.Println("Show current state of the Minecraft servers.")
-			fmt.Println("If a server is specified, show its state only.")
+			fmt.Println("Show current state of configured Minecraft servers.")
+			fmt.Println("This command compares the current state of the server files on disk with the")
+			fmt.Println("desired state defined in Peridot's configuration.")
+			fmt.Println("If a server is specified, it shows only its state.")
 		} else {
 			// FIXME
 		}
@@ -47,7 +49,8 @@ func main() {
 		if help {
 			fmt.Println("Usage: " + name + " apply [server]")
 			fmt.Println("")
-			fmt.Println("Apply current config to the Minecraft servers.")
+			fmt.Println("Apply current config to the Minecraft server files on disk.")
+			fmt.Println("This command will restart the server(s) if possible.")
 			fmt.Println("If a server is specified, apply the config to that server only.")
 		} else {
 			// FIXME
@@ -57,7 +60,7 @@ func main() {
 		if help {
 			fmt.Println("Usage: " + name + " apply-live [server]")
 			fmt.Println("")
-			fmt.Println("Apply current config to the Minecraft servers without restart.")
+			fmt.Println("Apply current config to the Minecraft server files on disk, without restarts.")
 			fmt.Println("If a server is specified, apply the config to that server only.")
 		} else {
 			// FIXME
@@ -75,9 +78,10 @@ func main() {
 		fmt.Println("Commands:")
 		fmt.Println("  help                      Show this help message")
 		fmt.Println("  version                   Show version information")
-		fmt.Println("  status, state [server]    Show current state of the Minecraft servers")
-		fmt.Println("  apply [server]            Apply current config to the Minecraft servers")
-		fmt.Println("  apply-live [server]       Apply current config to the Minecraft servers without restart")
+		fmt.Println("  status, state [server]    Show current state of configured Minecraft servers")
+		fmt.Println("  apply [server]            Apply current config to Minecraft server files")
+		fmt.Println("  apply-live [server]       Apply current config to Minecraft server files,")
+		fmt.Println("                            without restarts")
 		fmt.Println("")
 		fmt.Println("Options:")
 		fmt.Println("  --version, -v            Show version information")
