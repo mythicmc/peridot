@@ -1,9 +1,16 @@
 package repos
 
 import (
+	"archive/zip"
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -73,19 +80,40 @@ func LoadRepository(path, name string) (Repository, error) {
 		if err != nil {
 			return repo, err
 		}
-		_, err = DetermineJarType(jarData)
-		// FIXME: Garbage code
-		plugin, err := LoadPlugin(jarPath)
+		jarType, metadata, err := DetermineJarType(jarData)
 		if err != nil {
+			if errors.Is(err, ErrUnknownJarType) {
+				log.Printf("Warning: %s is not a recognized JAR type, skipping...\n", jarPath)
+				continue
+			}
 			return repo, err
 		}
-		if _, ok := repo.Plugins[plugin.Name]; ok {
-			// TODO: Handle conflicts
+		// TODO: Handle conflicts
+		hash := sha256.Sum256(jarData)
+		if jarType == "vanilla" || jarType == "paper" || jarType == "velocity" {
+			repo.Software[jarType] = Software{
+				Type:     jarType,
+				Path:     jarPath,
+				Checksum: strings.ToLower(hex.EncodeToString(hash[:])),
+			}
+		} else {
+			name, version, err := ParsePluginMetadata(metadata)
+			if err != nil {
+				log.Printf("Warning: Failed to load plugin metadata from %s, skipping: %v\n", jarPath, err)
+				continue
+			}
+			repo.Plugins[name] = Plugin{
+				Name:     name,
+				Path:     jarPath,
+				Version:  version,
+				Checksum: strings.ToLower(hex.EncodeToString(hash[:])),
+			}
 		}
-		repo.Plugins[plugin.Name] = plugin
 	}
 	return repo, nil
 }
+
+var ErrUnknownJarType = errors.New("unknown JAR type")
 
 // DetermineJarType checks what type of software the given JAR is.
 // Supported types are:
@@ -93,19 +121,52 @@ func LoadRepository(path, name string) (Repository, error) {
 // - "paper"
 // - "velocity"
 // - "plugin"
-func DetermineJarType(jar []byte) (string, error) {
-	/* r, err := zip.NewReader(bytes.NewReader(jar), int64(len(jar)))
+func DetermineJarType(jar []byte) (string, []byte, error) {
+	r, err := zip.NewReader(bytes.NewReader(jar), int64(len(jar)))
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	// FIXME: Do something meaningful
-	slices.ContainsFunc(r.File, func(f *zip.File) bool {
-		return f.Name == "META-INF/MANIFEST.MF"
-	}) */
-	return "", nil
+	isVelocity := false
+	isPaper := false
+	isVanilla := false
+	isPlugin := slices.IndexFunc(r.File, func(file *zip.File) bool {
+		switch file.Name {
+		case "com/velocitypowered/proxy/Velocity.class":
+			isVelocity = true
+		case "io/papermc/paperclip/Paperclip.class":
+			isPaper = true
+		case "net/minecraft/server/MinecraftServer.class":
+			isVanilla = true
+		case "net/minecraft/bundler/Main.class":
+			isVanilla = true
+		}
+		return file.Name == "plugin.yml" ||
+			file.Name == "bungee.yml" ||
+			file.Name == "velocity-plugin.json"
+	})
+	if isPlugin != -1 {
+		metadataFile, err := r.File[isPlugin].Open()
+		if err != nil {
+			return "", nil, err
+		}
+		defer metadataFile.Close()
+		metadata, err := io.ReadAll(metadataFile)
+		if err != nil {
+			return "", nil, err
+		}
+		return "plugin", metadata, nil
+	} else if isVelocity {
+		return "velocity", nil, nil
+	} else if isPaper {
+		return "paper", nil, nil
+	} else if isVanilla {
+		return "vanilla", nil, nil
+	}
+	return "", nil, ErrUnknownJarType
 }
 
-func LoadPlugin(path string) (Plugin, error) {
-	// TODO
-	return Plugin{}, nil
+// ParsePluginMetadata retrieves the plugin name and version from its metadata file.
+func ParsePluginMetadata(metadata []byte) (string, string, error) {
+	// TODO: Parse YAML
+	return "", "", errors.New("not implemented")
 }
