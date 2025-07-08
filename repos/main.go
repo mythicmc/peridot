@@ -27,6 +27,7 @@ type Repository struct {
 type Software struct {
 	Type     string
 	Path     string
+	Version  string
 	Checksum string
 }
 
@@ -90,12 +91,27 @@ func LoadRepository(path, name string) (Repository, error) {
 			}
 			return repo, err
 		}
-		// TODO: Handle conflicts
 		hash := sha256.Sum256(jarData)
 		if jarType == "vanilla" || jarType == "paper" || jarType == "velocity" {
+			stat, err := os.Stat(jarPath)
+			if err != nil {
+				return Repository{}, err
+			}
+			version := stat.ModTime().String()
+			if existingSoftware, exists := repo.Software[jarType]; exists {
+				if strings.Compare(existingSoftware.Version, version) < 0 {
+					log.Printf("Warning: Replacing software %s with version %s with newer version %s\n",
+						jarType, existingSoftware.Version, version)
+				} else {
+					log.Printf("Warning: Skipping software %s with version %s (already have version %s!)\n",
+						jarType, version, existingSoftware.Version)
+					continue
+				}
+			}
 			repo.Software[jarType] = Software{
 				Type:     jarType,
 				Path:     jarPath,
+				Version:  version,
 				Checksum: strings.ToLower(hex.EncodeToString(hash[:])),
 			}
 		} else {
