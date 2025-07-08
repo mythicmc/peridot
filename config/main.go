@@ -1,11 +1,13 @@
 package config
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/dop251/goja"
 	"github.com/mythicmc/peridot/repos"
 )
 
@@ -37,12 +39,41 @@ func LoadConfigs(repositories repos.Repositories) (Configs, error) {
 			continue
 		}
 		filePath := filepath.Join(configFolder, configFile.Name())
-		_, err := os.ReadFile(filePath)
+		configJs, err := os.ReadFile(filePath)
 		if err != nil {
 			return nil, err
 		}
-		_ = configFile.Name()[:strings.LastIndex(configFile.Name(), ".")]
-		// FIXME: Execute the JS files to get the configs
+		configName := configFile.Name()[:strings.LastIndex(configFile.Name(), ".")]
+		config, err := ExecuteConfig(string(configJs))
+		if err != nil {
+			return nil, err
+		}
+		configs[configName] = config
 	}
 	return configs, nil
+}
+
+func ExecuteConfig(configFile string) (Config, error) {
+	vm := goja.New()
+	// FIXME: Provide `require` CommonJS implementation...
+	vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+	vm.GlobalObject().Set("module", vm.NewObject())
+	_, err := vm.RunString(configFile)
+	if err != nil {
+		return Config{}, err
+	}
+
+	var config Config
+	exportsJsonValue, err := vm.RunString("JSON.stringify(module.exports)")
+	var exportsJson string
+	err = vm.ExportTo(exportsJsonValue, &exportsJson)
+	if err != nil {
+		return Config{}, nil
+	}
+	err = json.Unmarshal([]byte(exportsJson), &config)
+	if err != nil {
+		return Config{}, nil
+	}
+
+	return config, nil
 }
