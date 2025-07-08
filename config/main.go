@@ -44,7 +44,7 @@ func LoadConfigs(repositories repos.Repositories) (Configs, error) {
 			return nil, err
 		}
 		configName := configFile.Name()[:strings.LastIndex(configFile.Name(), ".")]
-		config, err := ExecuteConfig(string(configJs))
+		config, err := ExecuteConfig(configFolder, string(configJs))
 		if err != nil {
 			return nil, err
 		}
@@ -53,26 +53,47 @@ func LoadConfigs(repositories repos.Repositories) (Configs, error) {
 	return configs, nil
 }
 
-func ExecuteConfig(configFile string) (Config, error) {
+func ExecuteConfig(configFolder, configFile string) (Config, error) {
 	vm := goja.New()
-	// FIXME: Provide `require` CommonJS implementation...
-	vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+
 	vm.GlobalObject().Set("module", vm.NewObject())
+	vm.GlobalObject().Set("require", func(call goja.FunctionCall) goja.Value {
+		if len(call.Arguments) != 1 {
+			return vm.NewTypeError("require() expects a single argument")
+		}
+		modulePath := call.Argument(0).String()
+		// Resolve module path
+		if !filepath.IsAbs(modulePath) {
+			modulePath = filepath.Join(configFolder, modulePath)
+		}
+		// Read the module file
+		moduleData, err := os.ReadFile(modulePath)
+		if err != nil {
+			return vm.NewGoError(err)
+		}
+		// Execute the module code
+		_, err = vm.RunString(string(moduleData))
+		if err != nil {
+			return vm.NewGoError(err)
+		}
+		// Return the exports of the module
+		value := vm.GlobalObject().Get("module").ToObject(vm).Get("exports")
+		return value
+	})
+	vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 	_, err := vm.RunString(configFile)
 	if err != nil {
 		return Config{}, err
 	}
 
 	var config Config
-	exportsJsonValue, err := vm.RunString("JSON.stringify(module.exports)")
-	var exportsJson string
-	err = vm.ExportTo(exportsJsonValue, &exportsJson)
+	exportsJson, err := vm.RunString("JSON.stringify(module.exports)")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
-	err = json.Unmarshal([]byte(exportsJson), &config)
+	err = json.Unmarshal([]byte(exportsJson.String()), &config)
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	return config, nil

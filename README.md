@@ -26,7 +26,7 @@ This component is responsible for managing Peridot repositories, located in the 
 
 This component is responsible for loading Peridot server configuration files, located in the `configs` folder. It loads all configuration files, performs validations (e.g. duplicate server names, missing plugins from the repositories, etc), then provides the list of available servers to the Deployment Engine.
 
-The loader leverages a JavaScript-based configuration format, allowing for easy extensibility and customization.
+The loader leverages a JavaScript-based configuration format, allowing for easy extensibility and customization. Basic support for `require()` and `module.export` is implemented (not full CommonJS!) to share configuration info between files.
 
 ### Deployment Engine
 
