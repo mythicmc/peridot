@@ -42,8 +42,8 @@ func LoadRepositories() (Repositories, error) {
 	if err != nil {
 		return nil, err
 	}
-	repoFolder := filepath.Join(wd, "repos")
 	repositories := make(Repositories)
+	repoFolder := filepath.Join(wd, "repos")
 	repoFolders, err := os.ReadDir(repoFolder)
 	if err != nil && os.IsNotExist(err) {
 		log.Println("Warning: repos/ folder does not exist!")
