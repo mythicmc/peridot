@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
@@ -48,9 +49,83 @@ func LoadConfigs(repositories repos.Repositories) (Configs, error) {
 		if err != nil {
 			return nil, err
 		}
+		err = ValidateConfig(config, repositories)
+		if err != nil {
+			return nil, err
+		}
 		configs[configName] = config
 	}
 	return configs, nil
+}
+
+var ErrInvalidLocation = errors.New("invalid location: must be an absolute path")
+
+var ErrLocationNotExists = errors.New("invalid location: its parent directory does not exist")
+
+var ErrInvalidSoftware = errors.New("invalid software: must be one of 'vanilla', 'paper', or 'velocity'")
+
+var ErrInvalidRepos = errors.New("invalid repositories: at least one repository must be specified")
+
+var ErrUnknownRepo = errors.New("unknown repository: must be one of the configured repositories")
+
+var ErrInvalidPlugin = errors.New("invalid plugin: must be a non-empty string")
+
+var ErrUnknownPluginSoftware = errors.New("unknown plugin or software: not found in the configured repositories")
+
+func ValidateConfig(config Config, repositories repos.Repositories) error {
+	if config.Location == "" || !filepath.IsAbs(config.Location) {
+		return ErrInvalidLocation
+	} else if stat, err := os.Stat(filepath.Dir(config.Location)); os.IsNotExist(err) {
+		return ErrLocationNotExists
+	} else if err != nil {
+		return err
+	} else if !stat.IsDir() {
+		return ErrLocationNotExists
+	}
+	if len(config.Repos) == 0 {
+		return ErrInvalidRepos
+	}
+	repos := make([]repos.Repository, len(repositories))
+	for _, repo := range config.Repos {
+		if _, ok := repositories[repo]; !ok {
+			return ErrUnknownRepo
+		} else {
+			repos = append(repos, repositories[repo])
+		}
+	}
+	if config.Software != "vanilla" && config.Software != "paper" && config.Software != "velocity" {
+		return ErrInvalidSoftware
+	}
+	for _, plugin := range config.Plugins {
+		if plugin == "" {
+			return ErrInvalidPlugin
+		}
+	}
+
+	// Validate plugins and software against repositories
+	for _, plugin := range config.Plugins {
+		pluginFound := false
+		for _, repo := range repos {
+			if _, ok := repo.Plugins[plugin]; ok {
+				pluginFound = true
+				break
+			}
+		}
+		if !pluginFound {
+			return ErrUnknownPluginSoftware
+		}
+	}
+	softwareFound := false
+	for _, repo := range repos {
+		if _, ok := repo.Software[config.Software]; ok {
+			softwareFound = true
+			break
+		}
+	}
+	if !softwareFound {
+		return ErrUnknownPluginSoftware
+	}
+	return nil
 }
 
 func ExecuteConfig(configFolder, configFile string) (Config, error) {
