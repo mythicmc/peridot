@@ -12,8 +12,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-
-	"github.com/goccy/go-yaml"
 )
 
 type Repositories map[string]Repository
@@ -38,6 +36,12 @@ type Plugin struct {
 	Checksum string
 }
 
+type RepositoryLoadError struct{ Name string }
+
+func (e RepositoryLoadError) Error() string {
+	return "failed to load repository " + e.Name
+}
+
 func LoadRepositories() (Repositories, error) {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -47,7 +51,7 @@ func LoadRepositories() (Repositories, error) {
 	repoFolder := filepath.Join(wd, "repos")
 	repoFolders, err := os.ReadDir(repoFolder)
 	if err != nil && os.IsNotExist(err) {
-		log.Println("Warning: repos/ folder does not exist!")
+		log.Println("Warning: repos/ folder does not exist! No repositories loaded.")
 		return repositories, nil
 	} else if err != nil {
 		return nil, err
@@ -59,7 +63,7 @@ func LoadRepositories() (Repositories, error) {
 		repoPath := filepath.Join(repoFolder, folder.Name())
 		repositories[folder.Name()], err = LoadRepository(repoPath, folder.Name())
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(RepositoryLoadError{Name: folder.Name()}, err)
 		}
 	}
 	return repositories, nil
@@ -115,7 +119,7 @@ func LoadRepository(path, name string) (Repository, error) {
 				Checksum: strings.ToLower(hex.EncodeToString(hash[:])),
 			}
 		} else {
-			pluginMetadata, err := ParsePluginMetadata(metadataFile)
+			pluginMetadata, err := ParsePluginMetadata(file.Name(), metadataFile)
 			if err != nil {
 				log.Printf("Warning: Failed to load plugin metadata from %s, skipping: %v\n", jarPath, err)
 				continue
@@ -191,21 +195,4 @@ func DetermineJarType(jar []byte) (string, []byte, error) {
 		return "vanilla", nil, nil
 	}
 	return "", nil, ErrUnknownJarType
-}
-
-type PluginMetadata struct {
-	Name    string `yaml:"name"`
-	Version string `yaml:"version"`
-}
-
-// ParsePluginMetadata retrieves the plugin name and version from its metadata file.
-func ParsePluginMetadata(metadataFile []byte) (PluginMetadata, error) {
-	var pluginMetadata PluginMetadata
-	err := yaml.Unmarshal(metadataFile, &pluginMetadata)
-	if err != nil {
-		return PluginMetadata{}, err
-	} else if pluginMetadata.Name == "" || pluginMetadata.Version == "" {
-		return PluginMetadata{}, errors.New("invalid plugin metadata: missing name or version")
-	}
-	return pluginMetadata, nil
 }

@@ -30,11 +30,12 @@ func LoadConfigs(repositories repos.Repositories) (Configs, error) {
 	configFolder := filepath.Join(wd, "configs")
 	configFiles, err := os.ReadDir(configFolder)
 	if err != nil && os.IsNotExist(err) {
-		log.Println("Warning: configs/ folder does not exist!")
+		log.Println("Warning: configs/ folder does not exist! No configurations loaded.")
 		return configs, nil
 	} else if err != nil {
 		return nil, err
 	}
+	// FIXME: Better error handling.
 	for _, configFile := range configFiles {
 		if configFile.IsDir() || !strings.HasSuffix(configFile.Name(), ".js") {
 			continue
