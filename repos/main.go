@@ -38,9 +38,7 @@ type Plugin struct {
 
 type RepositoryLoadError struct{ Name string }
 
-func (e RepositoryLoadError) Error() string {
-	return "failed to load repository " + e.Name
-}
+func (e RepositoryLoadError) Error() string { return "failed to load repository " + e.Name }
 
 func LoadRepositories() (Repositories, error) {
 	wd, err := os.Getwd()
