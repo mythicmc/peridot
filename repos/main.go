@@ -23,10 +23,10 @@ type Repository struct {
 }
 
 type Software struct {
-	Type     string
-	Path     string
-	Version  string
-	Checksum string
+	Type      string
+	Path      string
+	UpdatedAt string
+	Checksum  string
 }
 
 type Plugin struct {
@@ -99,22 +99,22 @@ func LoadRepository(path, name string) (Repository, error) {
 			if err != nil {
 				return Repository{}, err
 			}
-			version := stat.ModTime().String()
+			updatedAt := stat.ModTime().String()
 			if existingSoftware, exists := repo.Software[jarType]; exists {
-				if strings.Compare(existingSoftware.Version, version) < 0 {
-					log.Printf("Warning: Replacing software %s with version %s with newer version %s\n",
-						jarType, existingSoftware.Version, version)
+				if strings.Compare(existingSoftware.UpdatedAt, updatedAt) < 0 {
+					log.Printf("Warning: Replacing software %s with timestamp %s with newer timestamp %s\n",
+						jarType, existingSoftware.UpdatedAt, updatedAt)
 				} else {
-					log.Printf("Warning: Skipping software %s with version %s (already have version %s!)\n",
-						jarType, version, existingSoftware.Version)
+					log.Printf("Warning: Skipping software %s with timestamp %s (already have timestamp %s!)\n",
+						jarType, updatedAt, existingSoftware.UpdatedAt)
 					continue
 				}
 			}
 			repo.Software[jarType] = Software{
-				Type:     jarType,
-				Path:     jarPath,
-				Version:  version,
-				Checksum: strings.ToLower(hex.EncodeToString(hash[:])),
+				Type:      jarType,
+				Path:      jarPath,
+				UpdatedAt: updatedAt,
+				Checksum:  strings.ToLower(hex.EncodeToString(hash[:])),
 			}
 		} else {
 			pluginMetadata, err := ParsePluginMetadata(file.Name(), metadataFile)
