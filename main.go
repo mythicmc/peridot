@@ -6,21 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-
-	"github.com/mythicmc/peridot/config"
-	"github.com/mythicmc/peridot/repos"
 )
 
 func main() {
-	repos, err := repos.LoadRepositories()
-	if err != nil {
-		println(err.Error())
-	}
-	_, err = config.LoadConfigs(repos)
-	if err != nil {
-		println(err.Error())
-	}
-
 	name := filepath.Base(os.Args[0])
 	args := os.Args[1:]
 	help := false
