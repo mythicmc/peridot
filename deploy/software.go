@@ -23,10 +23,10 @@ func PrepareAllSoftwareUpdate(
 ) (map[string]SoftwareUpdateOperation, error) {
 	operations := make(map[string]SoftwareUpdateOperation)
 	for name, config := range configs {
-		operation, err := PreparePluginUpdates(repos, name, config)
+		operation, err := PrepareSoftwareUpdate(repos, name, config)
 		if err != nil {
 			return nil, errors.Join(PrepareUpdateError{Name: name, Type: "software"}, err)
-		} else if operation.CurrentPath != "" {
+		} else if operation != (SoftwareUpdateOperation{}) {
 			operations[name] = operation
 		}
 	}
