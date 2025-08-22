@@ -6,14 +6,15 @@ import (
 
 	"github.com/mythicmc/peridot/config"
 	"github.com/mythicmc/peridot/repos"
+	"github.com/mythicmc/peridot/utils"
 )
 
 type SoftwareUpdateOperation struct {
 	SoftwareType string
 	CurrentPath  string
 	UpdatePath   string
-	PrevVersion  string
-	NewVersion   string
+	PrevHash     string
+	NewHash      string
 }
 
 var ErrSoftwareNotInRepos = errors.New("software not found in repositories")
@@ -49,13 +50,13 @@ func PrepareSoftwareUpdate(
 		SoftwareType: config.Software,
 		CurrentPath:  filepath.Join(config.Location, config.Software+".jar"),
 		UpdatePath:   software.Path,
-		NewVersion:   software.Checksum[:8],
+		NewHash:      software.Checksum[:8],
 	}
-	prevHash, err := hashFile(operation.CurrentPath)
+	prevHash, err := utils.HashFilePath(operation.CurrentPath)
 	if err != nil {
 		return SoftwareUpdateOperation{}, err
 	}
-	operation.PrevVersion = prevHash[:8]
+	operation.PrevHash = prevHash[:8]
 
 	if prevHash == software.Checksum {
 		return SoftwareUpdateOperation{}, nil
