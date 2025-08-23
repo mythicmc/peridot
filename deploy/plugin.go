@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/mythicmc/peridot/config"
@@ -44,6 +45,7 @@ func PreparePluginUpdates(
 		return nil, err
 	}
 	updates := make(map[string]PluginUpdateOperation)
+	installedPlugins := make(map[string]struct{})
 	for _, file := range files {
 		if file.IsDir() || !strings.HasSuffix(file.Name(), ".jar") {
 			continue
@@ -68,20 +70,51 @@ func PreparePluginUpdates(
 			continue
 		}
 		hash := utils.HashData(data)
+		installedPlugins[metadata.Name] = struct{}{}
 
-		// FIXME: If the plugin isn't in the config, remove it
+		// If the plugin isn't in the config, remove it
+		if !slices.Contains(config.Plugins, metadata.Name) {
+			updates[metadata.Name] = PluginUpdateOperation{
+				PluginName:  metadata.Name,
+				CurrentPath: filepath.Join(config.Location, "plugins", file.Name()),
+				UpdatePath:  "",
+				PrevVersion: metadata.Version,
+				NewVersion:  "",
+			}
+			continue
+		}
 
 		// If the plugin is out of date, create an update op
 		plugin, err := repositories.GetPlugin(metadata.Name, config.Repos)
 		if err != nil {
-			// FIXME: This is unexpected
+			return nil, err // Config validation should've blocked this
 		} else if plugin.Version != metadata.Version || plugin.Checksum != hash {
 			updates[plugin.Name] = PluginUpdateOperation{
-				// FIXME
+				PluginName:  metadata.Name,
+				CurrentPath: filepath.Join(config.Location, "plugins", file.Name()),
+				UpdatePath:  plugin.Path,
+				PrevVersion: metadata.Version,
+				NewVersion:  plugin.Version,
 			}
 		}
 	}
 
-	// FIXME: If any plugin is missing, create an update op
+	// If any plugin is missing, create an update op
+	for _, name := range config.Plugins {
+		if _, ok := installedPlugins[name]; !ok {
+			plugin, err := repositories.GetPlugin(name, config.Repos)
+			if err != nil {
+				return nil, err // Config validation should've blocked this
+			} else {
+				updates[name] = PluginUpdateOperation{
+					PluginName:  name,
+					CurrentPath: "",
+					UpdatePath:  plugin.Path,
+					PrevVersion: "",
+					NewVersion:  plugin.Version,
+				}
+			}
+		}
+	}
 	return updates, nil
 }
