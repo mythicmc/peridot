@@ -11,10 +11,11 @@ import (
 )
 
 type Config struct {
-	Location string   `json:"location"`
-	Repos    []string `json:"repos"`
-	Software string   `json:"software"` // Supported: "vanilla", "paper", "velocity"
-	Plugins  []string `json:"plugins"`
+	Location         string            `json:"location"`
+	Repos            []string          `json:"repos"`
+	Software         string            `json:"software"`          // Supported: "vanilla", "paper", "velocity"
+	ServerProperties map[string]string `json:"server_properties"` // FIXME: support float64, bool
+	Plugins          []string          `json:"plugins"`
 }
 
 type Configs map[string]Config
