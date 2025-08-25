@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 
 	"github.com/mythicmc/peridot/config"
@@ -53,10 +54,14 @@ func PrepareSoftwareUpdate(
 		NewHash:      software.Checksum[:8],
 	}
 	prevHash, err := utils.HashFilePath(operation.CurrentPath)
-	if err != nil {
+	if err != nil && os.IsNotExist(err) {
+		operation.CurrentPath = ""
+		operation.PrevHash = ""
+	} else if err != nil {
 		return SoftwareUpdateOperation{}, err
+	} else {
+		operation.PrevHash = prevHash[:8]
 	}
-	operation.PrevHash = prevHash[:8]
 
 	if prevHash == software.Checksum {
 		return SoftwareUpdateOperation{}, nil
