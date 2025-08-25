@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/mythicmc/peridot/config"
@@ -15,7 +16,7 @@ type ServerPropertiesUpdateOperation struct {
 	NewValue string
 }
 
-func PrepareAllerverPropertiesUpdate(
+func PrepareAllServerPropertiesUpdate(
 	configs config.Configs,
 ) (map[string][]ServerPropertiesUpdateOperation, error) {
 	operations := make(map[string][]ServerPropertiesUpdateOperation)
@@ -59,12 +60,19 @@ func PrepareServerPropertiesUpdate(
 
 	operations := make([]ServerPropertiesUpdateOperation, 0)
 	for name, value := range config.ServerProperties {
-		if serverProperties[name] != value {
-			operations = append(operations, ServerPropertiesUpdateOperation{
-				Property: name,
-				OldValue: serverProperties[name],
-				NewValue: value,
-			})
+		operation := ServerPropertiesUpdateOperation{Property: name, OldValue: serverProperties[name]}
+		if str, ok := value.(string); ok && serverProperties[name] != str {
+			operation.NewValue = str
+			operations = append(operations, operation)
+		} else if num, ok := value.(float64); ok {
+			valAsNum, err := strconv.ParseFloat(serverProperties[name], 64)
+			if err != nil || valAsNum != num {
+				operation.NewValue = strconv.FormatFloat(num, 'f', -1, 64)
+				operations = append(operations, operation)
+			}
+		} else if boolVal, ok := value.(bool); ok && serverProperties[name] != strconv.FormatBool(boolVal) {
+			operation.NewValue = strconv.FormatBool(boolVal)
+			operations = append(operations, operation)
 		}
 	}
 	return operations, nil
