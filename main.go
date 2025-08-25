@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+
+	"github.com/mythicmc/peridot/cmd"
 )
 
 func main() {
@@ -13,6 +15,7 @@ func main() {
 	args := os.Args[1:]
 	help := false
 
+	// TODO: Use the flags package
 	if len(os.Args) < 2 {
 		log.SetFlags(log.Lshortfile)
 		log.Fatalln("no arguments provided")
@@ -42,7 +45,7 @@ func main() {
 			fmt.Println("desired state defined in Peridot's configuration.")
 			fmt.Println("If a server is specified, it shows only its state.")
 		} else {
-			// FIXME
+			cmd.HandleStateCommand(args[1:])
 		}
 		return
 	case "apply":
