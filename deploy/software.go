@@ -20,7 +20,7 @@ type SoftwareUpdateOperation struct {
 
 var ErrSoftwareNotInRepos = errors.New("software not found in repositories")
 
-func PrepareAllSoftwareUpdate(
+func PrepareAllSoftwareUpdates(
 	repos repos.Repositories, configs config.Configs,
 ) (map[string]SoftwareUpdateOperation, error) {
 	operations := make(map[string]SoftwareUpdateOperation)

@@ -16,12 +16,12 @@ type ServerPropertiesUpdateOperation struct {
 	NewValue string
 }
 
-func PrepareAllServerPropertiesUpdate(
+func PrepareAllServerPropertiesUpdates(
 	configs config.Configs,
 ) (map[string][]ServerPropertiesUpdateOperation, error) {
 	operations := make(map[string][]ServerPropertiesUpdateOperation)
 	for name, config := range configs {
-		operation, err := PrepareServerPropertiesUpdate(name, config)
+		operation, err := PrepareServerPropertiesUpdates(name, config)
 		if err != nil {
 			return nil, errors.Join(PrepareUpdateError{Name: name, Type: "server_properties"}, err)
 		} else if len(operation) > 0 {
@@ -31,7 +31,7 @@ func PrepareAllServerPropertiesUpdate(
 	return operations, nil
 }
 
-func PrepareServerPropertiesUpdate(
+func PrepareServerPropertiesUpdates(
 	server string, config config.Config,
 ) ([]ServerPropertiesUpdateOperation, error) {
 	if config.Software != "vanilla" && config.Software != "paper" {
@@ -74,6 +74,9 @@ func PrepareServerPropertiesUpdate(
 			operation.NewValue = strconv.FormatBool(boolVal)
 			operations = append(operations, operation)
 		}
+	}
+	if len(operations) == 0 {
+		return nil, nil
 	}
 	return operations, nil
 }

@@ -116,5 +116,9 @@ func PreparePluginUpdates(
 			}
 		}
 	}
+
+	if len(updates) == 0 {
+		return nil, nil
+	}
 	return updates, nil
 }
