@@ -65,8 +65,9 @@ func LoadRepositories() (Repositories, error) {
 
 func LoadRepository(path, name string) (Repository, error) {
 	repo := Repository{
-		Name:    name,
-		Plugins: make(map[string]Plugin),
+		Name:     name,
+		Plugins:  make(map[string]Plugin),
+		Software: make(map[string]Software),
 	}
 	jars, err := os.ReadDir(path)
 	if err != nil {

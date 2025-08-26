@@ -54,9 +54,9 @@ func HandleStateCommand(args []string) {
 	if len(serverPropertiesUpdates) > 0 {
 		fmt.Println("Pending server properties updates:")
 		for server, updates := range serverPropertiesUpdates {
-			fmt.Println(" -> " + server)
+			fmt.Println(" - " + server)
 			for _, update := range updates {
-				fmt.Printf("    => %s: %s -> %s\n", update.Property, update.OldValue, update.NewValue)
+				fmt.Printf("\t=> %s: %s -> %s\n", update.Property, update.OldValue, update.NewValue)
 			}
 		}
 	} else {
