@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -67,4 +68,30 @@ func PrepareSoftwareUpdate(
 		return SoftwareUpdateOperation{}, nil
 	}
 	return operation, nil
+}
+
+func ApplySoftwareUpdate(operation SoftwareUpdateOperation) error {
+	if operation.CurrentPath == "" {
+		return nil
+	}
+
+	// Apply the update (this is just a placeholder, implement your own logic)
+	destFile, err := os.Create(operation.CurrentPath)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	srcFile, err := os.Open(operation.UpdatePath)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	_, err = io.Copy(destFile, srcFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

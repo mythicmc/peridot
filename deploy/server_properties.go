@@ -80,3 +80,32 @@ func PrepareServerPropertiesUpdates(
 	}
 	return operations, nil
 }
+
+func ApplyServerPropertiesUpdates(
+	operations []ServerPropertiesUpdateOperation, config config.Config,
+) error {
+	serverPropertiesFile, err := os.ReadFile(filepath.Join(config.Location, "server.properties"))
+	if err != nil {
+		return err
+	}
+	serverProperties := string(serverPropertiesFile)
+	for _, operation := range operations {
+		if operation.OldValue == "" {
+			if serverProperties[len(serverProperties)-1] != '\n' {
+				serverProperties += "\n"
+			}
+			serverProperties += operation.Property + "=" + operation.NewValue + "\n"
+		} else {
+			keyVal := operation.Property + "=" + operation.NewValue + "\n"
+			if operation.NewValue == "" {
+				keyVal = ""
+			}
+			serverProperties = strings.ReplaceAll(
+				serverProperties,
+				operation.Property+"="+operation.OldValue+"\n",
+				keyVal,
+			)
+		}
+	}
+	return os.WriteFile(filepath.Join(config.Location, "server.properties"), []byte(serverProperties), 0644)
+}
