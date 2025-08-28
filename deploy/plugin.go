@@ -108,7 +108,7 @@ func PreparePluginUpdates(
 			} else {
 				updates[name] = PluginUpdateOperation{
 					PluginName:  name,
-					CurrentPath: "",
+					CurrentPath: filepath.Join(config.Location, "plugins", filepath.Base(plugin.Path)),
 					UpdatePath:  plugin.Path,
 					PrevVersion: "",
 					NewVersion:  plugin.Version,
@@ -121,4 +121,21 @@ func PreparePluginUpdates(
 		return nil, nil
 	}
 	return updates, nil
+}
+
+func ApplyPluginUpdates(operations map[string]PluginUpdateOperation) error {
+	for _, operation := range operations {
+		if operation.UpdatePath == "" {
+			// Remove plugin
+			if err := os.Remove(operation.CurrentPath); err != nil {
+				return err
+			}
+		} else {
+			// Add or update plugin
+			if err := utils.CopyFile(operation.UpdatePath, operation.CurrentPath); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

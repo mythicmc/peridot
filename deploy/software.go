@@ -2,7 +2,6 @@ package deploy
 
 import (
 	"errors"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -56,8 +55,7 @@ func PrepareSoftwareUpdate(
 	}
 	prevHash, err := utils.HashFilePath(operation.CurrentPath)
 	if err != nil && os.IsNotExist(err) {
-		operation.CurrentPath = ""
-		operation.PrevHash = ""
+		// Don't set PrevHash, it's already empty
 	} else if err != nil {
 		return SoftwareUpdateOperation{}, err
 	} else {
@@ -71,24 +69,7 @@ func PrepareSoftwareUpdate(
 }
 
 func ApplySoftwareUpdate(operation SoftwareUpdateOperation) error {
-	if operation.CurrentPath == "" {
-		return nil
-	}
-
-	// Apply the update (this is just a placeholder, implement your own logic)
-	destFile, err := os.Create(operation.CurrentPath)
-	if err != nil {
-		return err
-	}
-	defer destFile.Close()
-
-	srcFile, err := os.Open(operation.UpdatePath)
-	if err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	_, err = io.Copy(destFile, srcFile)
+	err := utils.CopyFile(operation.UpdatePath, operation.CurrentPath)
 	if err != nil {
 		return err
 	}
