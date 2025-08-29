@@ -66,9 +66,9 @@ func main() {
 			fmt.Println("Apply current config to the Minecraft server files on disk, without restarts.")
 			fmt.Println("If a server is specified, apply the config to that server only.")
 		} else {
-			// FIXME
-			return
+			cmd.HandleApplyLiveCommand(args[1:])
 		}
+		return
 	default:
 		if !help {
 			log.SetFlags(log.Lshortfile)
