@@ -123,18 +123,16 @@ func PreparePluginUpdates(
 	return updates, nil
 }
 
-func ApplyPluginUpdates(operations map[string]PluginUpdateOperation) error {
-	for _, operation := range operations {
-		if operation.UpdatePath == "" {
-			// Remove plugin
-			if err := os.Remove(operation.CurrentPath); err != nil {
-				return err
-			}
-		} else {
-			// Add or update plugin
-			if err := utils.CopyFile(operation.UpdatePath, operation.CurrentPath); err != nil {
-				return err
-			}
+func ApplyPluginUpdate(operation PluginUpdateOperation) error {
+	if operation.UpdatePath == "" {
+		// Remove plugin
+		if err := os.Remove(operation.CurrentPath); err != nil {
+			return err
+		}
+	} else {
+		// Add or update plugin
+		if err := utils.CopyFile(operation.UpdatePath, operation.CurrentPath); err != nil {
+			return err
 		}
 	}
 	return nil
