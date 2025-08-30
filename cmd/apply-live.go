@@ -3,22 +3,17 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/mythicmc/peridot/config"
 	"github.com/mythicmc/peridot/deploy"
 	"github.com/mythicmc/peridot/utils"
 )
 
-func HandleApplyLiveCommand(args []string) {
-	_, configs, softwareUpdates, serverPropertiesUpdates, pluginUpdates := loadReposConfigUpdateState()
-	previewUpdates(softwareUpdates, serverPropertiesUpdates, pluginUpdates)
-
-	fmt.Print("Proceed to apply updates live? [y/N] ")
-	var response string
-	fmt.Scanln(&response)
-	if response != "y" && response != "Y" {
-		fmt.Println("Aborting live update.")
-		return
-	}
-
+func interactivelyApplyUpdates(
+	configs config.Configs,
+	softwareUpdates map[string]deploy.SoftwareUpdateOperation,
+	serverPropertiesUpdates map[string][]deploy.ServerPropertiesUpdateOperation,
+	pluginUpdates map[string]map[string]deploy.PluginUpdateOperation,
+) {
 	for server, operation := range softwareUpdates {
 		fmt.Println("Updating server software for: ", server)
 
@@ -50,4 +45,19 @@ func HandleApplyLiveCommand(args []string) {
 			}
 		}
 	}
+}
+
+func HandleApplyLiveCommand(args []string) {
+	_, configs, softwareUpdates, serverPropertiesUpdates, pluginUpdates := loadReposConfigUpdateState()
+	previewUpdates(softwareUpdates, serverPropertiesUpdates, pluginUpdates)
+
+	fmt.Print("Proceed to apply updates live? [y/N] ")
+	var response string
+	fmt.Scanln(&response)
+	if response != "y" && response != "Y" {
+		fmt.Println("Aborting live update.")
+		return
+	}
+
+	interactivelyApplyUpdates(configs, softwareUpdates, serverPropertiesUpdates, pluginUpdates)
 }

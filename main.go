@@ -56,7 +56,7 @@ func main() {
 			fmt.Println("This command will restart the server(s) if possible.")
 			fmt.Println("If a server is specified, apply the config to that server only.")
 		} else {
-			// FIXME
+			cmd.HandleApplyCommand(args[1:])
 		}
 		return
 	case "apply-live":
