@@ -60,4 +60,6 @@ func HandleApplyLiveCommand(args []string) {
 	}
 
 	interactivelyApplyUpdates(configs, softwareUpdates, serverPropertiesUpdates, pluginUpdates)
+
+	fmt.Println("All updates have been applied successfully!")
 }

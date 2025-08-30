@@ -75,4 +75,6 @@ func HandleApplyCommand(args []string) {
 			log.Printf("Error starting server %s: %v\n", server, err)
 		}
 	}
+
+	fmt.Println("All updates have been applied successfully!")
 }
